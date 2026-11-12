@@ -1,4 +1,4 @@
-# Isaac Link
+# SSH Bridge
 
 Reach a Windows workstation over ordinary SSH when neither computer has a public
 IP address or router access. A small OpenSSH relay runs on Railway (or any Docker
@@ -10,8 +10,8 @@ Mac / Linux -- SSH client role --> relay <-- SSH device role -- Windows
                     encrypted inner SSH session --> Student account
 ```
 
-This is a small, single-workstation setup, not a general VPN. It can be used for
-other workloads besides Isaac Sim. It requires an existing Windows OpenSSH server,
+This is a small, single-workstation setup, not a general VPN. It works with any
+terminal-based workload and requires an existing Windows OpenSSH server,
 an authorized workstation login key, an internet connection, and an awake laptop.
 
 ## Security model
@@ -61,6 +61,10 @@ not used. Add a Railway TCP
 proxy for internal port **2222** and record the assigned hostname and public port.
 Only the relay SSH listener is public; the workstation forwarding port remains
 on relay loopback.
+
+For a custom hostname, create a DNS-only CNAME to the assigned Railway TCP
+hostname. The assigned public TCP port is still required. HTTP domain routing
+and HTTPS proxies do not replace an SSH TCP endpoint.
 
 ## Install on Windows
 
@@ -156,5 +160,18 @@ python3 -m unittest discover -s tests -v
 Tests create temporary keys and a disposable local relay. They verify forwarding
 and reject extra ports, role crossover, shell sessions and unknown keys. No
 deployment credentials are required. The Windows CI job compiles the connector.
+
+After deploying, run the explicit live check against your configured aliases:
+
+```sh
+python3 tools/verify_live.py --alias isaac-student --relay-alias isaac-relay \
+  --expected-user 'WORKSTATION\user' --report .state/live-verification.json
+```
+
+This verifies the Windows user token, concurrent sessions, a checksum-verified
+file transfer round trip, and authentication/forwarding restrictions on the
+actual public endpoint. It creates and removes a uniquely named directory under
+the workstation's temporary directory. Test a real Windows restart and sign-in,
+and a change of network, before relying on unattended access.
 
 MIT licensed. Runtime packages in the container retain their respective licenses.
