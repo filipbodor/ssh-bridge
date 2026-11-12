@@ -1,0 +1,20 @@
+name: Test relay
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t isaac-link-relay:local .
+      - run: python3 -m unittest discover -s tests -v
+  connector:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile Windows connector
+        shell: pwsh
+        run: |
+          & "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /out:IsaacLink.exe windows/Connector.cs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
