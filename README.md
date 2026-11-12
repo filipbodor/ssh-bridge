@@ -97,7 +97,18 @@ normally leaves it running.
 
 ## Connect from Mac or Linux
 
-Copy `examples/ssh_config` into your private SSH configuration and replace its
+Use the configurator with public host-key files obtained through a trusted channel:
+
+```sh
+python3 client/configure.py --host relay.example.net --port 12345 \
+  --relay-identity ~/.ssh/isaac_relay_client --laptop-identity ~/.ssh/id_ed25519 \
+  --relay-host-key /secure/path/relay_host_ed25519.pub \
+  --laptop-host-key /secure/path/workstation_host_ed25519.pub
+```
+
+It adds a dedicated SSH config include, preserves existing configuration and
+refuses to silently replace different pinned keys. Alternatively, copy
+`examples/ssh_config` into your private SSH configuration and replace its
 placeholders. Keep the pinned relay and workstation public host keys in
 `~/.ssh/isaac_link_known_hosts`, using aliases `isaac-relay` and `isaac-laptop`.
 
