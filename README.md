@@ -44,7 +44,7 @@ The relay host key must have no passphrase for unattended startup. A client key
 may use a passphrase when a local SSH agent is available; keep agent forwarding
 disabled. Keep these private keys out of Git and the Docker build context.
 
-Create a Railway service from this repository. Configure these variables in
+Create a Railway service from this repository using its Dockerfile. Configure these variables in
 Railway's secret storage:
 
 | Variable | Value |
@@ -55,7 +55,9 @@ Railway's secret storage:
 
 The image deliberately fails to start if any required key is absent. Host keys
 must persist across deployments through the secret variable; a volume is not
-needed. Use exactly one replica and disable service sleeping. Add a Railway TCP
+needed. In the service settings, use exactly one replica, disable service sleeping,
+and select an on-failure restart policy. Railway's legacy `railway.toml` config is
+not used. Add a Railway TCP
 proxy for internal port **2222** and record the assigned hostname and public port.
 Only the relay SSH listener is public; the workstation forwarding port remains
 on relay loopback.
