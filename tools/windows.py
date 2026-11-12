@@ -7,6 +7,9 @@ from pathlib import Path
 
 
 def run(script, host, known_hosts, user="Student", timeout=45):
+    script = ("[Console]::OutputEncoding=[System.Text.Encoding]::UTF8\n"
+              "$OutputEncoding=[System.Text.Encoding]::UTF8\n"
+              "$ProgressPreference='SilentlyContinue'\n" + script)
     encoded = base64.b64encode(script.encode("utf-16le")).decode()
     return subprocess.run(
         ["ssh", "-o", "BatchMode=yes", "-o", "ForwardAgent=no",
@@ -15,7 +18,7 @@ def run(script, host, known_hosts, user="Student", timeout=45):
          "-o", "IdentitiesOnly=yes", "-i", str(Path.home() / '.ssh/id_ed25519'),
          f"{user}@{host}", "powershell.exe", "-NoProfile",
          "-NonInteractive", "-EncodedCommand", encoded],
-        capture_output=True, text=True, timeout=timeout,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout,
     )
 
 
