@@ -1,0 +1,32 @@
+Port 2222
+ListenAddress 0.0.0.0
+HostKey /run/isaac-link/host_ed25519
+PidFile /run/isaac-link/sshd.pid
+AuthorizedKeysFile /etc/ssh/isaac-link-keys/%u
+AuthenticationMethods publickey
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitEmptyPasswords no
+PermitRootLogin no
+AllowUsers device client
+AllowAgentForwarding no
+AllowStreamLocalForwarding no
+GatewayPorts no
+PermitTunnel no
+X11Forwarding no
+PermitTTY no
+MaxSessions 0
+LoginGraceTime 20
+MaxAuthTries 3
+MaxStartups 5:30:10
+ClientAliveInterval 60
+ClientAliveCountMax 3
+LogLevel ERROR
+
+Match User device
+    AllowTcpForwarding remote
+    PermitListen 127.0.0.1:22022
+
+Match User client
+    AllowTcpForwarding local
+    PermitOpen 127.0.0.1:22022
