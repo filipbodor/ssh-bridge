@@ -132,8 +132,25 @@ scp results.txt isaac-student:results.txt
 
 An AI agent on the client can invoke the same SSH alias, keeping its AI account
 credentials on the client. This provides terminal and file access, not automatic
-streaming of the remote desktop. Unattended training should save checkpoints
-and be launched independently of the lifetime of an interactive SSH session.
+streaming of the remote desktop.
+
+### Long-running jobs
+
+An ordinary SSH disconnect can terminate processes launched directly from that
+shell. To run a training job independently, invoke `windows/Start-DetachedJob.ps1`
+under the standard Windows user, supplying the interpreter's full path, its
+arguments and a working directory. For example:
+
+```powershell
+.\windows\Start-DetachedJob.ps1 -FilePath 'C:\Python311\python.exe' -Arguments 'train.py --headless' -WorkingDirectory 'C:\work\training'
+```
+
+The helper uses Task Scheduler's COM interface, which also works when the
+PowerShell ScheduledTasks CIM cmdlets are inaccessible over SSH. It creates a
+uniquely named task with the current user's limited interactive token and no
+stored password. The user must remain signed into Windows. Configure the job
+itself to write logs and checkpoints; sign-out, shutdown and reboot still stop
+the job. Manage or remove the returned task name using Windows Task Scheduler.
 
 ## Costs and operations
 
