@@ -16,5 +16,6 @@ jobs:
       - name: Compile Windows connector
         shell: pwsh
         run: |
-          & "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /out:IsaacLink.exe windows/Connector.cs
+          $source = Join-Path $PWD 'windows\Connector.cs'
+          & "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /out:IsaacLink.exe $source
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
