@@ -90,6 +90,14 @@ Logs are capped to two approximately 1 MiB files. Run `windows/Stop.ps1` to stop
 it and `windows/Start.ps1` to resume. Removing the Startup shortcut disables
 automatic launch; it does not uninstall or stop Windows OpenSSH Server.
 
+When installing through an SSH session, use `-NoStart`: Windows may terminate
+child processes when that session closes. If the target user is already signed
+into the desktop, an administrator can run
+`windows/Start-LoggedOnUser.ps1 -User Student` to start the connector in that
+existing desktop session without storing the user's password. This creates an
+on-demand task running with the user's limited token. The Startup shortcut
+remains responsible for automatic launch on future logins.
+
 The supervisor turns on the machine, signs into the configured Windows user,
 and leaves it powered, online and awake. Connecting does not wake a sleeping
 computer. Signing out terminates that user's connector; locking the screen
