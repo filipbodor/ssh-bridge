@@ -1,0 +1,27 @@
+# Save outside the repository and replace every REPLACE_* value.
+Host isaac-relay
+    HostName REPLACE_RELAY_HOST
+    Port REPLACE_RELAY_PORT
+    User client
+    IdentityFile ~/.ssh/isaac_relay_client
+    IdentitiesOnly yes
+    ForwardAgent no
+    HostKeyAlias isaac-relay
+    UserKnownHostsFile ~/.ssh/isaac_link_known_hosts
+    StrictHostKeyChecking yes
+    ServerAliveInterval 30
+    ServerAliveCountMax 3
+
+Host isaac-student
+    HostName 127.0.0.1
+    Port 22022
+    User Student
+    ProxyJump isaac-relay
+    IdentityFile ~/.ssh/REPLACE_LAPTOP_LOGIN_KEY
+    IdentitiesOnly yes
+    ForwardAgent no
+    HostKeyAlias isaac-laptop
+    UserKnownHostsFile ~/.ssh/isaac_link_known_hosts
+    StrictHostKeyChecking yes
+    ServerAliveInterval 30
+    ServerAliveCountMax 3
