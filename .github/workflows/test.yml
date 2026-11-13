@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t isaac-link-relay:local .
+      - run: docker build -t ssh-bridge-relay:local .
       - run: python3 -m unittest discover -s tests -v
   connector:
     runs-on: windows-latest
@@ -17,7 +17,7 @@ jobs:
         shell: pwsh
         run: |
           $source = Join-Path $PWD 'windows\Connector.cs'
-          & "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /out:IsaacLink.exe $source
+          & "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /out:SSHBridge.exe $source
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Parse PowerShell installers
         shell: pwsh
@@ -28,3 +28,7 @@ jobs:
             [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
             if ($errors) { throw ($errors | Out-String) }
           }
+
+      - name: Verify legacy staging preserves access configuration
+        shell: pwsh
+        run: ./tests/test_windows_staging.ps1
