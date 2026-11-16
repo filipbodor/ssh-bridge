@@ -36,7 +36,7 @@ function New-OwnedTask($Name,$Program,$Arguments,$Directory) {
     $null=$folder.RegisterTaskDefinition($Name,$d,2,"$env:COMPUTERNAME\$env:USERNAME",$null,3)
 }
 function With-StateLock($Action) {
-    $mutex=[Threading.Mutex]::new($false,('Local\SSHBridgeMigrationState-'+$env:USERNAME))
+    $mutex=[Threading.Mutex]::new($false,('Global\SSHBridgeMigrationState-'+$env:USERNAME))
     try {
         if (!$mutex.WaitOne(15000)) { throw 'Migration state lock timed out.' }
         try { & $Action } finally { $mutex.ReleaseMutex() }
