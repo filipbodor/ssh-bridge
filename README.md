@@ -52,11 +52,32 @@ migration helper and migration tests; there is one connector implementation.
 
 Staging is not activation. Do not run the fresh installer over a legacy remote
 installation or launch both connectors: only one can own the forwarded port.
-A later activation must have an independent automatic rollback, remote login
-verification and a subsequent reboot/sign-in check before removing the legacy
-startup entry. Staging deliberately provides no automatic switchover.
+`windows/Migrate-Legacy.ps1` provides a guarded activation using separate Task
+Scheduler controller, watchdog, new-connector and legacy-recovery tasks. It
+stores no password and runs with the signed-in user's limited token.
+
+After staging, run `-Mode Initialize`, then `-Mode Launch`. The detached controller
+verifies that its independent watchdog is armed before stopping the old app.
+Reconnect through the public endpoint, verify the new executable is the sole
+connector and the Windows account is correct, then run the installed copy:
+
+```powershell
+& "$env:LOCALAPPDATA\SSHBridge\Migration\Migrate-Legacy.ps1" -Mode Confirm
+```
+
+The default confirmation window is four minutes. An unconfirmed attempt stops
+the new app, restores the saved original startup shortcut and launches the legacy
+connector. Confirmation installs the **SSH Bridge** startup shortcut; the old
+binary, key and shortcut backup remain available for recovery. The next Windows
+sign-in starts another guarded attempt and needs fresh remote confirmation;
+without it the watchdog automatically returns to the legacy installation. This
+conservative behavior is retained until a real reboot/sign-in has been verified.
+`-Mode Status` reports state; `-Mode Rollback` explicitly restores the legacy app.
+Do not remove recovery files/tasks merely because one handoff succeeded.
+
 Keep the running Railway endpoint and keys unchanged while the workstation is
-offline; deploying the renamed image is a separate operation.
+offline; deploying the renamed image is a separate operation. A source rename
+alone does not require a relay deployment.
 
 ## Deploy the relay
 
