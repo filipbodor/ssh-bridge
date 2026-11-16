@@ -14,7 +14,7 @@ $ErrorActionPreference='Stop'
 function Write-JsonAtomic($Path,$Value) {
     $temp=$Path+'.'+[guid]::NewGuid().ToString('N')+'.tmp'
     [IO.File]::WriteAllText($temp,($Value | ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false))
-    if (Test-Path $Path) { [IO.File]::Replace($temp,$Path,$null) } else { [IO.File]::Move($temp,$Path) }
+    if (Test-Path $Path) { [IO.File]::Replace($temp,$Path,($Path+'.previous')) } else { [IO.File]::Move($temp,$Path) }
 }
 function Read-Json($Path) { Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json }
 function Utc-Now { [DateTime]::UtcNow }
