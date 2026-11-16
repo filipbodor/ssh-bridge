@@ -4,6 +4,12 @@ $root=Join-Path $env:TEMP ('ssh-bridge-state-'+[guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $root | Out-Null
 try {
     . (Join-Path $PSScriptRoot '..\windows\Migrate-Legacy.ps1') -Mode Library -StateDirectory $root
+    $username=$env:USERNAME
+    try {
+        $env:USERNAME=$username.ToLower();$lower=State-MutexName
+        $env:USERNAME=$username.ToUpper();$upper=State-MutexName
+        if ($lower -cne $upper -or !$lower.StartsWith('Global\SSHBridgeMigrationState-S-')) { throw 'Migration mutex must use a cross-session, casing-independent user identity.' }
+    } finally { $env:USERNAME=$username }
     function Start-OwnedTask($Name) { $script:launched=$Name }
     function Stop-OwnedTask($Name) { $script:stopped=$Name }
     function Find-Connector($Path) { @() }

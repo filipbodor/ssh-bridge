@@ -35,8 +35,10 @@ function New-OwnedTask($Name,$Program,$Arguments,$Directory) {
     $a=$d.Actions.Create(0); $a.Path=$Program; $a.Arguments=$Arguments; $a.WorkingDirectory=$Directory
     $null=$folder.RegisterTaskDefinition($Name,$d,2,"$env:COMPUTERNAME\$env:USERNAME",$null,3)
 }
+# SSH runs in session 0, desktop tasks in session 1; USERNAME casing can differ.
+function State-MutexName { 'Global\SSHBridgeMigrationState-'+[Security.Principal.WindowsIdentity]::GetCurrent().User.Value }
 function With-StateLock($Action) {
-    $mutex=[Threading.Mutex]::new($false,('Global\SSHBridgeMigrationState-'+[Security.Principal.WindowsIdentity]::GetCurrent().User.Value))
+    $mutex=[Threading.Mutex]::new($false,(State-MutexName))
     try {
         if (!$mutex.WaitOne(15000)) { throw 'Migration state lock timed out.' }
         try { & $Action } finally { $mutex.ReleaseMutex() }
