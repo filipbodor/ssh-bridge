@@ -19,7 +19,7 @@ function Write-JsonAtomic($Path,$Value) {
 function Read-Json($Path) { Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json }
 function Utc-Now { [DateTime]::UtcNow }
 function Add-Log($Text) { Add-Content -LiteralPath (Join-Path $StateDirectory 'migration.log') -Value ((Utc-Now).ToString('o')+' '+$Text) }
-function Find-Connector($Path) { @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $Path }) }
+function Find-Connector($Path) { @(Get-Process -Name ([IO.Path]::GetFileNameWithoutExtension($Path)) -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $Path }) }
 function Scheduler-Folder { $s=New-Object -ComObject Schedule.Service; $s.Connect(); $s.GetFolder('\') }
 function Start-OwnedTask($Name) { $null=(Scheduler-Folder).GetTask($Name).Run($null) }
 function Stop-OwnedTask($Name) { $task=(Scheduler-Folder).GetTask($Name); if ($task.State -eq 4) { $task.Stop(0) } }
