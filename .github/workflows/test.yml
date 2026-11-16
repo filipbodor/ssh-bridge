@@ -32,3 +32,7 @@ jobs:
       - name: Verify legacy staging preserves access configuration
         shell: pwsh
         run: ./tests/test_windows_staging.ps1
+
+      - name: Verify guarded migration state transitions
+        shell: pwsh
+        run: ./tests/test_migration_state.ps1
