@@ -54,14 +54,14 @@ class Connector
     static int Main(string[] args)
     {
         bool created;
-        using (var mutex = new Mutex(true, @"Local\IsaacLink-" + Environment.UserName, out created))
+        using (var mutex = new Mutex(true, @"Local\SSHBridge-" + Environment.UserName, out created))
         {
             if (!created) return 0;
             try
             {
                 var config = Config();
                 string ssh = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), @"System32\OpenSSH\ssh.exe");
-                string key = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), @".ssh\isaac_relay_ed25519");
+                string key = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), @".ssh\ssh_bridge_relay_ed25519");
                 string known = Path.Combine(Root, "known_hosts");
                 if (!File.Exists(ssh) || !File.Exists(key) || !File.Exists(known))
                     throw new Exception("Missing SSH executable, device key or pinned relay host key");
@@ -76,7 +76,7 @@ class Connector
                     var info = new ProcessStartInfo(ssh);
                     info.Arguments = "-N -T -p " + config["port"] + " -i " + Quote(key) +
                         " -o BatchMode=yes -o IdentitiesOnly=yes -o ForwardAgent=no" +
-                        " -o StrictHostKeyChecking=yes -o HostKeyAlias=isaac-relay" +
+                        " -o StrictHostKeyChecking=yes -o HostKeyAlias=ssh-bridge-relay" +
                         " -o UserKnownHostsFile=" + Quote(known) +
                         " -o ExitOnForwardFailure=yes -o ConnectTimeout=15" +
                         " -o ServerAliveInterval=30 -o ServerAliveCountMax=3" +

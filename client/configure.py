@@ -36,26 +36,26 @@ def main():
     for identity in (args.relay_identity, args.laptop_identity):
         if not Path(identity).expanduser().is_file():
             parser.error("Identity file does not exist: " + identity)
-    keys = "isaac-relay " + host_key(args.relay_host_key) + "\nisaac-laptop " + host_key(args.laptop_host_key) + "\n"
+    keys = "ssh-bridge-relay " + host_key(args.relay_host_key) + "\nssh-bridge-workstation " + host_key(args.laptop_host_key) + "\n"
     ssh = Path.home()/".ssh"
     includes = ssh/"config.d"
     includes.mkdir(parents=True, exist_ok=True, mode=0o700)
-    known = ssh/"isaac_link_known_hosts"
+    known = ssh/"ssh_bridge_known_hosts"
     if known.exists() and known.read_text() != keys:
         raise ValueError("Existing pinned keys differ; verify the change before replacing them")
-    config = includes/"isaac-link.conf"
+    config = includes/"ssh-bridge.conf"
     shared = ("    IdentitiesOnly yes\n    ForwardAgent no\n    StrictHostKeyChecking yes\n"
               "    UserKnownHostsFile " + quoted(known) + "\n"
               "    ServerAliveInterval 30\n    ServerAliveCountMax 3\n")
-    content = (f"Host isaac-relay\n    HostName {args.host}\n    Port {args.port}\n"
-               "    User client\n    HostKeyAlias isaac-relay\n    IdentityFile " + quoted(args.relay_identity) + "\n" + shared +
-               f"\nHost isaac-student\n    HostName 127.0.0.1\n    Port 22022\n    User {args.user}\n"
-               "    ProxyJump isaac-relay\n    HostKeyAlias isaac-laptop\n    IdentityFile " + quoted(args.laptop_identity) + "\n" + shared)
+    content = (f"Host ssh-bridge-relay\n    HostName {args.host}\n    Port {args.port}\n"
+               "    User client\n    HostKeyAlias ssh-bridge-relay\n    IdentityFile " + quoted(args.relay_identity) + "\n" + shared +
+               f"\nHost ssh-bridge-workstation\n    HostName 127.0.0.1\n    Port 22022\n    User {args.user}\n"
+               "    ProxyJump ssh-bridge-relay\n    HostKeyAlias ssh-bridge-workstation\n    IdentityFile " + quoted(args.laptop_identity) + "\n" + shared)
     main_config = ssh/"config"
     previous = main_config.read_text() if main_config.exists() else ""
     include = "Include " + quoted(config)
     if main_config.exists() and include not in previous.splitlines():
-        backup = ssh/"config.before-isaac-link"
+        backup = ssh/"config.before-ssh-bridge"
         if not backup.exists():
             backup.write_text(previous)
             backup.chmod(0o600)
@@ -66,7 +66,7 @@ def main():
     if include not in previous.splitlines():
         main_config.write_text(include + "\n" + previous)
         main_config.chmod(0o600)
-    print("Configured: ssh isaac-student")
+    print("Configured: ssh ssh-bridge-workstation")
 
 
 if __name__ == "__main__":

@@ -30,6 +30,55 @@ an authorized workstation login key, an internet connection, and an awake laptop
   its files and connector key. The connector key grants only its restricted
   relay role; it does not authenticate to the client computer.
 
+## Existing installations and the naming migration
+
+New installs use `SSHBridge.exe`, `%LOCALAPPDATA%\SSHBridge`, and the aliases
+`ssh-bridge-relay` / `ssh-bridge-workstation`. The relay protocol, usernames,
+forwarding ports, environment-variable names and key material have not changed.
+An existing connector remains compatible with the renamed relay source.
+
+The client configurator adds `ssh-bridge.conf` and a separate pinned-host file.
+It leaves existing includes, aliases and identity files untouched, so old SSH
+commands remain available during migration. Do not remove the old configuration
+until both routes have been verified against the real workstation.
+
+For a Windows installation originally named Isaac Link, use
+`windows/Stage-LegacyMigration.ps1` **only when the workstation is reachable**.
+It compiles the renamed connector in a separate folder, copies the existing
+identity with its ACL, preserves the relay address/port and pinned public key,
+and refuses existing destinations. It does not start or stop a connector, change
+a startup shortcut, or remove the legacy files. Old names appear only in this
+migration helper and migration tests; there is one connector implementation.
+
+Staging is not activation. Do not run the fresh installer over a legacy remote
+installation or launch both connectors: only one can own the forwarded port.
+`windows/Migrate-Legacy.ps1` provides a guarded activation using separate Task
+Scheduler controller, watchdog, new-connector and legacy-recovery tasks. It
+stores no password and runs with the signed-in user's limited token.
+
+After staging, run `-Mode Initialize`, then `-Mode Launch`. The detached controller
+verifies that its independent watchdog is armed before stopping the old app.
+Reconnect through the public endpoint, verify the new executable is the sole
+connector and the Windows account is correct, then run the installed copy:
+
+```powershell
+& "$env:LOCALAPPDATA\SSHBridge\Migration\Migrate-Legacy.ps1" -Mode Confirm
+```
+
+The default confirmation window is four minutes. An unconfirmed attempt stops
+the new app, restores the saved original startup shortcut and launches the legacy
+connector. Confirmation installs the **SSH Bridge** startup shortcut; the old
+binary, key and shortcut backup remain available for recovery. The next Windows
+sign-in starts another guarded attempt and needs fresh remote confirmation;
+without it the watchdog automatically returns to the legacy installation. This
+conservative behavior is retained until a real reboot/sign-in has been verified.
+`-Mode Status` reports state; `-Mode Rollback` explicitly restores the legacy app.
+Do not remove recovery files/tasks merely because one handoff succeeded.
+
+Keep the running Railway endpoint and keys unchanged while the workstation is
+offline; deploying the renamed image is a separate operation. A source rename
+alone does not require a relay deployment.
+
 ## Deploy the relay
 
 Generate an Ed25519 host key and a separate client-to-relay key outside the
@@ -37,7 +86,7 @@ repository. The Windows installer generates its own device key if needed.
 
 ```sh
 ssh-keygen -t ed25519 -f /secure/path/relay_host_ed25519
-ssh-keygen -t ed25519 -f ~/.ssh/isaac_relay_client
+ssh-keygen -t ed25519 -f ~/.ssh/ssh_bridge_relay_client
 ```
 
 The relay host key must have no passphrase for unattended startup. A client key
@@ -84,7 +133,7 @@ deploy the installer according to the machine's policy. Do not disable policy
 protections globally. The compiled connector runs without PowerShell.
 
 The installer uses the built-in .NET Framework C# compiler, stores the app in
-`%LOCALAPPDATA%\IsaacLink`, pins the relay host key, and creates an **Isaac Link**
+`%LOCALAPPDATA%\SSHBridge`, pins the relay host key, and creates an **SSH Bridge**
 shortcut in the current user's Startup folder. Authorize the printed device
 public key on the relay before expecting it to connect.
 
@@ -113,7 +162,7 @@ Use the configurator with public host-key files obtained through a trusted chann
 
 ```sh
 python3 client/configure.py --host relay.example.net --port 12345 \
-  --relay-identity ~/.ssh/isaac_relay_client --laptop-identity ~/.ssh/id_ed25519 \
+  --relay-identity ~/.ssh/ssh_bridge_relay_client --laptop-identity ~/.ssh/id_ed25519 \
   --relay-host-key /secure/path/relay_host_ed25519.pub \
   --laptop-host-key /secure/path/workstation_host_ed25519.pub
 ```
@@ -122,12 +171,12 @@ It adds a dedicated SSH config include, preserves existing configuration and
 refuses to silently replace different pinned keys. Alternatively, copy
 `examples/ssh_config` into your private SSH configuration and replace its
 placeholders. Keep the pinned relay and workstation public host keys in
-`~/.ssh/isaac_link_known_hosts`, using aliases `isaac-relay` and `isaac-laptop`.
+`~/.ssh/ssh_bridge_known_hosts`, using aliases `ssh-bridge-relay` and `ssh-bridge-workstation`.
 
 ```sh
-ssh isaac-student
-ssh isaac-student whoami
-scp results.txt isaac-student:results.txt
+ssh ssh-bridge-workstation
+ssh ssh-bridge-workstation whoami
+scp results.txt ssh-bridge-workstation:results.txt
 ```
 
 An AI agent on the client can invoke the same SSH alias, keeping its AI account
@@ -170,7 +219,7 @@ workstation authorized key separately if workstation access must be revoked.
 Requires Docker, Python 3 and OpenSSH client tools:
 
 ```sh
-docker build -t isaac-link-relay:local .
+docker build -t ssh-bridge-relay:local .
 python3 -m unittest discover -s tests -v
 ```
 
@@ -181,7 +230,7 @@ deployment credentials are required. The Windows CI job compiles the connector.
 After deploying, run the explicit live check against your configured aliases:
 
 ```sh
-python3 tools/verify_live.py --alias isaac-student --relay-alias isaac-relay \
+python3 tools/verify_live.py --alias ssh-bridge-workstation --relay-alias ssh-bridge-relay \
   --expected-user 'WORKSTATION\user' --report .state/live-verification.json
 ```
 

@@ -13,7 +13,7 @@ import uuid
 
 class Marker(socketserver.BaseRequestHandler):
     def handle(self):
-        self.request.sendall(b"ISAAC_LINK_OK\n")
+        self.request.sendall(b"SSH_BRIDGE_OK\n")
 
 
 class RelayTest(unittest.TestCase):
@@ -31,9 +31,9 @@ class RelayTest(unittest.TestCase):
             "DEVICE_PUBLIC_KEY=" + (cls.root/"device.pub").read_text().strip() + "\n" +
             "CLIENT_PUBLIC_KEY=" + (cls.root/"client.pub").read_text().strip() + "\n")
         envfile.chmod(0o600)
-        cls.name = "isaac-link-test-" + uuid.uuid4().hex[:10]
+        cls.name = "ssh-bridge-test-" + uuid.uuid4().hex[:10]
         subprocess.run(["docker", "run", "-d", "--name", cls.name, "--env-file", str(envfile),
-                        "-p", "127.0.0.1::2222", os.getenv("RELAY_TEST_IMAGE", "isaac-link-relay:local")],
+                        "-p", "127.0.0.1::2222", os.getenv("RELAY_TEST_IMAGE", "ssh-bridge-relay:local")],
                        check=True, capture_output=True)
         cls.port = subprocess.check_output(["docker", "port", cls.name, "2222"], text=True).strip().split(":")[-1]
         cls.server = socketserver.ThreadingTCPServer(("127.0.0.1", 0), Marker)
@@ -45,7 +45,7 @@ class RelayTest(unittest.TestCase):
         # Startup readiness also verifies the permitted forwarding path.
         for _ in range(50):
             result = subprocess.run(cls.ssh("client") + ["-W", "127.0.0.1:22022"], capture_output=True, timeout=4)
-            if result.returncode == 0 and result.stdout == b"ISAAC_LINK_OK\n":
+            if result.returncode == 0 and result.stdout == b"SSH_BRIDGE_OK\n":
                 break
             if cls.device.poll() is not None:
                 cls.cleanup()
@@ -84,7 +84,7 @@ class RelayTest(unittest.TestCase):
     def test_permitted_forward(self):
         result = self.attempt("client", "-W", "127.0.0.1:22022")
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout, b"ISAAC_LINK_OK\n")
+        self.assertEqual(result.stdout, b"SSH_BRIDGE_OK\n")
 
     def test_client_cannot_reach_other_ports(self):
         result = self.attempt("client", "-W", "127.0.0.1:22")

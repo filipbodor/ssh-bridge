@@ -1,8 +1,8 @@
 Port 2222
 ListenAddress 0.0.0.0
-HostKey /run/isaac-link/host_ed25519
-PidFile /run/isaac-link/sshd.pid
-AuthorizedKeysFile /etc/ssh/isaac-link-keys/%u
+HostKey /run/ssh-bridge/host_ed25519
+PidFile /run/ssh-bridge/sshd.pid
+AuthorizedKeysFile /etc/ssh/ssh-bridge-keys/%u
 AuthenticationMethods publickey
 PasswordAuthentication no
 KbdInteractiveAuthentication no
